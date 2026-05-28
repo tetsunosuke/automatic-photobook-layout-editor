@@ -154,7 +154,7 @@ function App() {
 
   // Automated integration test for Google Photos Album import and Auto Layout
   useEffect(() => {
-    if (modelsLoading || !project || photos.length > 0 || isAnalyzing) return;
+    if (modelsLoading || !project || isAnalyzing) return;
 
     const params = new URLSearchParams(window.location.search);
     if (params.get('autoTest') === 'true') {
@@ -167,6 +167,35 @@ function App() {
         setAnalyzeProgress({ current: 0, total: 0 });
 
         try {
+          // --- FORCE CLEANUP PREVIOUS DATA ---
+          console.log('Clearing previous session data for automated test...');
+          await clearAllPhotos();
+          await clearAllPeople();
+          
+          setPhotos([]);
+          setPeople([]);
+
+          const currentPageCount = project.settings.pageCount || 24;
+          const currentAspectRatio = project.settings.aspectRatio || '1:1';
+          const defaultProj: ProjectState = {
+            id: PROJECT_ID,
+            name: 'マイ・フォトブック',
+            pages: Array.from({ length: currentPageCount }, (_, i) => ({
+              id: i + 1,
+              layoutId: '1-bleed',
+              background: '#ffffff',
+              placements: {}
+            })),
+            settings: {
+              aspectRatio: currentAspectRatio,
+              showBleed: true,
+              pageCount: currentPageCount
+            },
+            createdAt: Date.now()
+          };
+          await saveProject(defaultProj);
+          // ------------------------------------
+
           const res = await fetch(`/api/fetch-album?url=${encodeURIComponent(targetUrl)}`);
           if (!res.ok) {
             throw new Error(`Failed to fetch album via API (status: ${res.status})`);
@@ -226,14 +255,16 @@ function App() {
           const autoPages = generateAutoLayout(
             photosList,
             updatedPeople,
-            project.settings.aspectRatio,
-            project.settings.pageCount
+            defaultProj.settings.aspectRatio,
+            defaultProj.settings.pageCount
           );
           if (autoPages.length > 0) {
-            updateProject({
-              ...project,
+            const finalProj = {
+              ...defaultProj,
               pages: autoPages
-            });
+            };
+            await saveProject(finalProj);
+            setProject(finalProj);
             setCurrentSpreadIndex(0);
             setActivePageId(1);
           }
