@@ -152,6 +152,106 @@ function App() {
     init();
   }, []);
 
+  // Automated integration test for Google Photos Album import and Auto Layout
+  useEffect(() => {
+    if (modelsLoading || !project || photos.length > 0 || isAnalyzing) return;
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('autoTest') === 'true') {
+      console.log('Automated test triggered. Starting Google Photos import...');
+      
+      const runAutomatedTest = async () => {
+        const targetUrl = 'https://photos.app.goo.gl/JgE5iFgC5ERetND48';
+        setIsAnalyzing(true);
+        setAlbumError(null);
+        setAnalyzeProgress({ current: 0, total: 0 });
+
+        try {
+          const res = await fetch(`/api/fetch-album?url=${encodeURIComponent(targetUrl)}`);
+          if (!res.ok) {
+            throw new Error(`Failed to fetch album via API (status: ${res.status})`);
+          }
+
+          const { urls } = await res.json();
+          if (!urls || urls.length === 0) {
+            throw new Error('No photos found in shared album.');
+          }
+
+          // Use the default import limit (e.g. 50 photos) for the test
+          const urlsToFetch = urls.slice(0, importLimit);
+          setAnalyzeProgress({ current: 0, total: urlsToFetch.length });
+
+          const photosList: PhotoData[] = [];
+
+          for (let i = 0; i < urlsToFetch.length; i++) {
+            const imgUrl = urlsToFetch[i];
+            try {
+              const imgRes = await fetch(`/api/proxy-image?url=${encodeURIComponent(imgUrl)}`);
+              if (!imgRes.ok) continue;
+
+              const blob = await imgRes.blob();
+              const imgElement = await blobToImage(blob);
+              const detectedFaces = await detectFaces(imgElement);
+
+              const photo: PhotoData = {
+                id: `photo_gp_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 5)}`,
+                name: `google_photo_${i + 1}.jpg`,
+                blob: blob,
+                width: imgElement.naturalWidth || imgElement.width,
+                height: imgElement.naturalHeight || imgElement.height,
+                lastModified: Date.now() - (urlsToFetch.length - i) * 60000,
+                faces: detectedFaces,
+                url: URL.createObjectURL(blob)
+              };
+
+              await savePhoto(photo);
+              photosList.push(photo);
+            } catch (e) {
+              console.error(`Failed to process image ${i}:`, e);
+            }
+            setAnalyzeProgress(prev => ({ ...prev, current: i + 1 }));
+          }
+
+          setPhotos(photosList);
+
+          // Run clustering
+          let updatedPeople: PersonData[] = [];
+          if (photosList.length > 0) {
+            updatedPeople = await runFaceClustering(photosList);
+          }
+
+          setIsAnalyzing(false);
+
+          // Run auto layout
+          const autoPages = generateAutoLayout(
+            photosList,
+            updatedPeople,
+            project.settings.aspectRatio,
+            project.settings.pageCount
+          );
+          if (autoPages.length > 0) {
+            updateProject({
+              ...project,
+              pages: autoPages
+            });
+            setCurrentSpreadIndex(0);
+            setActivePageId(1);
+          }
+
+          // Clean up URL parameter to avoid looping
+          window.history.replaceState({}, document.title, window.location.pathname);
+
+        } catch (err: any) {
+          console.error('Automated test error:', err);
+          setAlbumError(err.message || 'Automation failed');
+          setIsAnalyzing(false);
+        }
+      };
+
+      runAutomatedTest();
+    }
+  }, [modelsLoading, project]);
+
   // Sync Project to DB on state change
   const updateProject = async (updated: ProjectState) => {
     setProject(updated);
