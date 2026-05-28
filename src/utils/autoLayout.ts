@@ -156,8 +156,9 @@ export function generateAutoLayout(
     if (bucket.length <= photosPerPage) {
       selectedPhotos = [...bucket];
     } else {
-      // Score candidates to balance people
-      const candidates = bucket.map(photo => {
+      // Score candidates to select one best representative photo (main photo)
+      // and fill the rest of the slots with chronological photos to keep the story flow.
+      const candidates = bucket.map((photo, index) => {
         let score = 1.0;
 
         if (photo.faces.length > 0) score += 0.5;
@@ -171,11 +172,41 @@ export function generateAutoLayout(
           }
         });
 
-        return { photo, score };
+        return { photo, score, originalIndex: index };
       });
 
+      // Sort by score to find the best representative photo (highest score)
       candidates.sort((a, b) => b.score - a.score);
-      selectedPhotos = candidates.slice(0, photosPerPage).map(c => c.photo);
+      const mainPhoto = candidates[0].photo;
+
+      // Extract the rest and sort them back to original chronological order
+      const remainingCandidates = candidates.slice(1);
+      remainingCandidates.sort((a, b) => a.originalIndex - b.originalIndex);
+
+      // Evenly sample the remaining count to fill the pages slots
+      const neededCount = photosPerPage - 1;
+      const sampledPhotos: PhotoData[] = [];
+
+      if (neededCount > 0 && remainingCandidates.length > 0) {
+        const step = remainingCandidates.length / neededCount;
+        for (let i = 0; i < neededCount; i++) {
+          const idx = Math.min(
+            remainingCandidates.length - 1,
+            Math.floor(i * step + step / 2)
+          );
+          sampledPhotos.push(remainingCandidates[idx].photo);
+        }
+      }
+
+      // Combine main photo and sampled photos, then sort them chronologically
+      const combined = [mainPhoto, ...sampledPhotos];
+      combined.sort((a, b) => {
+        const idxA = bucket.findIndex(p => p.id === a.id);
+        const idxB = bucket.findIndex(p => p.id === b.id);
+        return idxA - idxB;
+      });
+
+      selectedPhotos = combined;
     }
 
     // Update global appearance tracker for people in selected photos
