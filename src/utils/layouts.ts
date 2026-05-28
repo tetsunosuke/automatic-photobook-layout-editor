@@ -89,8 +89,8 @@ export const LAYOUT_TEMPLATES: Record<string, LayoutDef[]> = {
       name: '斜めスリット2分割',
       slotsCount: 2,
       slots: [
-        { id: 'slot-0', top: '0%', left: '0%', width: '60%', height: '100%', orientation: 'portrait', clipPath: 'polygon(0 0, 100% 0, 66% 100%, 0 100%)' },
-        { id: 'slot-1', top: '0%', left: '40%', width: '60%', height: '100%', orientation: 'portrait', clipPath: 'polygon(34% 0, 100% 0, 100% 100%, 0 100%)' }
+        { id: 'slot-0', top: '0%', left: '0%', width: '60%', height: '100%', orientation: 'portrait', clipPath: 'polygon(0 0, 98.33% 0, 65% 100%, 0 100%)' },
+        { id: 'slot-1', top: '0%', left: '40%', width: '60%', height: '100%', orientation: 'portrait', clipPath: 'polygon(35% 0, 100% 0, 100% 100%, 1.67% 100%)' }
       ]
     },
     {
@@ -151,9 +151,9 @@ export const LAYOUT_TEMPLATES: Record<string, LayoutDef[]> = {
       name: '斜めスリット3分割',
       slotsCount: 3,
       slots: [
-        { id: 'slot-0', top: '0%', left: '0%', width: '45%', height: '100%', orientation: 'portrait', clipPath: 'polygon(0 0, 100% 0, 55% 100%, 0 100%)' },
-        { id: 'slot-1', top: '0%', left: '25%', width: '50%', height: '100%', orientation: 'portrait', clipPath: 'polygon(45% 0, 100% 0, 55% 100%, 0 100%)' },
-        { id: 'slot-2', top: '0%', left: '55%', width: '45%', height: '100%', orientation: 'portrait', clipPath: 'polygon(45% 0, 100% 0, 100% 100%, 0 100%)' }
+        { id: 'slot-0', top: '0%', left: '0%', width: '45%', height: '100%', orientation: 'portrait', clipPath: 'polygon(0 0, 86.67% 0, 53.33% 100%, 0 100%)' },
+        { id: 'slot-1', top: '0%', left: '25%', width: '50%', height: '100%', orientation: 'portrait', clipPath: 'polygon(32% 0, 92% 0, 62% 100%, 2% 100%)' },
+        { id: 'slot-2', top: '0%', left: '55%', width: '45%', height: '100%', orientation: 'portrait', clipPath: 'polygon(40% 0, 100% 0, 100% 100%, 6.67% 100%)' }
       ]
     }
   ],

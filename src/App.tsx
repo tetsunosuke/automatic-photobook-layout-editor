@@ -1146,7 +1146,7 @@ function App() {
                           >
                             {placement ? (
                               /* Photo Placement inside Slot */
-                              <div className="slot-image-container">
+                              <div className="slot-image-container" style={{ clipPath: slot.clipPath, WebkitClipPath: slot.clipPath }}>
                                 {/* Pan overlay */}
                                 <div 
                                   onMouseDown={(e) => handlePanStart(e, page.id, slot.id)}
@@ -1484,7 +1484,7 @@ function App() {
                       WebkitClipPath: slot.clipPath
                     }}
                   >
-                    <div className="print-slot-image-container">
+                    <div className="print-slot-image-container" style={{ clipPath: slot.clipPath, WebkitClipPath: slot.clipPath }}>
                       <img
                         src={url}
                         alt=""

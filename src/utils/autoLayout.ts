@@ -232,6 +232,20 @@ export function generateAutoLayout(
       const perms = getPermutations(Array.from({ length: count }, (_, i) => i));
       for (const perm of perms) {
         let mismatch = 0;
+
+        // Apply penalty to overlapping or complex slanted layouts to keep auto-layout clean
+        const overlappingLayoutIds = [
+          '2-inset',
+          '2-slanted',
+          '2-diagonal',
+          '3-offset-collage',
+          '3-slanted',
+          '4-collage'
+        ];
+        if (overlappingLayoutIds.includes(tpl.id)) {
+          mismatch += 10;
+        }
+
         for (let slotIdx = 0; slotIdx < tpl.slots.length; slotIdx++) {
           const photoIdx = perm[slotIdx];
           if (photoIdx !== undefined && photoIdx < photoOrients.length) {
